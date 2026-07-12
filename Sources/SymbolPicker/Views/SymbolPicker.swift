@@ -68,13 +68,16 @@ public struct SymbolPicker: View {
 
     public var body: some View {
         VStack(spacing: 0) {
-            VStack(spacing: 10) {
-                if let colorSelection {
-                    ColorPaletteRow(selection: colorSelection, palette: palette)
-                }
-                searchField
+            if let colorSelection {
+                ColorPaletteRow(selection: colorSelection, palette: palette)
+                    .padding(.horizontal, 14)
+                    .padding(.top, 14)
+                    .padding(.bottom, 12)
+                Divider()
             }
-            .padding(12)
+            searchField
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
 
             content
         }
