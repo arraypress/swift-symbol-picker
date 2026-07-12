@@ -36,8 +36,10 @@ public struct SymbolPicker: View {
     @State private var query: String = ""
     @State private var debounced: String = ""
     @State private var results: [String] = []
+    @FocusState private var searchFocused: Bool
 
     private let gridSpacing: Double = 10
+    private let columnCount = 8
 
     /// Creates a picker with a color row above the symbol grid.
     ///
@@ -65,14 +67,17 @@ public struct SymbolPicker: View {
     }
 
     public var body: some View {
-        VStack(spacing: 12) {
-            if let colorSelection {
-                ColorPaletteRow(selection: colorSelection, palette: palette)
+        VStack(spacing: 0) {
+            VStack(spacing: 10) {
+                if let colorSelection {
+                    ColorPaletteRow(selection: colorSelection, palette: palette)
+                }
+                searchField
             }
-            searchField
+            .padding(12)
+
             content
         }
-        .padding(12)
         .task { catalog.loadIfNeeded() }
         .task(id: query) {
             /// Debounce so a burst of keystrokes filters once, when the user pauses
@@ -90,10 +95,15 @@ public struct SymbolPicker: View {
                 .foregroundStyle(.secondary)
             TextField("Search Symbols", text: $query)
                 .textFieldStyle(.plain)
+                .focused($searchFocused)
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 6)
-        .background(.quaternary, in: RoundedRectangle(cornerRadius: 8))
+        .padding(.horizontal, 10)
+        .padding(.vertical, 7)
+        .background(.quaternary, in: RoundedRectangle(cornerRadius: 9))
+        .overlay(
+            RoundedRectangle(cornerRadius: 9)
+                .strokeBorder(searchFocused ? Color.accentColor : .clear, lineWidth: 2)
+        )
     }
 
     // MARK: - Content
@@ -110,17 +120,27 @@ public struct SymbolPicker: View {
 
     private var browse: some View {
         ScrollView {
-            LazyVStack(alignment: .leading, spacing: 18) {
+            LazyVStack(alignment: .leading, spacing: 0) {
                 ForEach(catalog.categories) { category in
-                    VStack(alignment: .leading, spacing: 8) {
-                        Label(category.label, systemImage: category.icon)
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundStyle(.secondary)
-                        grid(category.symbols)
-                    }
+                    sectionHeader(category.label)
+                    grid(category.symbols)
+                        .padding(.horizontal, 12)
+                        .padding(.top, 8)
+                        .padding(.bottom, 16)
                 }
             }
         }
+    }
+
+    /// The full-width uppercase header bar, matching Shortcuts' category dividers
+    private func sectionHeader(_ label: String) -> some View {
+        Text(label.uppercased())
+            .font(.system(size: 11, weight: .semibold))
+            .foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 5)
+            .background(Color.secondary.opacity(0.12))
     }
 
     private var searchResults: some View {
@@ -128,7 +148,9 @@ public struct SymbolPicker: View {
             if results.isEmpty {
                 emptyState
             } else {
-                ScrollView { grid(results) }
+                ScrollView {
+                    grid(results).padding(12)
+                }
             }
         }
     }
@@ -177,7 +199,7 @@ public struct SymbolPicker: View {
     }
 
     private var columns: [GridItem] {
-        Array(repeating: GridItem(spacing: gridSpacing), count: 8)
+        Array(repeating: GridItem(spacing: gridSpacing), count: columnCount)
     }
 }
 
@@ -186,5 +208,5 @@ public struct SymbolPicker: View {
     @Previewable @State var symbol = "star.fill"
     @Previewable @State var color = Color.blue
     SymbolPicker(symbol: $symbol, color: $color)
-        .frame(width: 360, height: 440)
+        .frame(width: 360, height: 460)
 }
