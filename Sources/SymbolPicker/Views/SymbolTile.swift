@@ -75,15 +75,7 @@ public struct SymbolTile: View {
 
     /// The color as shown: lifted when it would vanish into a dark window, dropped when it
     /// would vanish into a light one. Anything in the middle is left exactly as chosen.
-    private var fill: Color {
-        guard let luminance = color.relativeLuminance else { return color }
-        switch colorScheme {
-        case .dark where luminance < 0.05: return color.mixed(toward: 0.30)
-        case .dark where luminance < 0.12: return color.mixed(toward: 0.18)
-        case .light where luminance > 0.85: return color.mixed(toward: -0.22)
-        default: return color
-        }
-    }
+    private var fill: Color { color.legible(in: colorScheme) }
 
     /// White on anything darker than mid-grey, near-black on anything lighter
     private var glyph: Color {

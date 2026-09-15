@@ -55,3 +55,23 @@ public extension Color {
         #endif
     }
 }
+
+public extension Color {
+
+    /// The color as a surface a glyph or a label can sit on in this appearance. A brand color
+    /// is chosen for a logo on white; on a dark window a near-black one is a hole, and on a
+    /// light window a near-white one vanishes. This lifts the first and drops the second, just
+    /// far enough to be a shape, and leaves everything else exactly as chosen.
+    ///
+    /// `SymbolTile` fills with it; a card or a banner painted in a metric's color wants the
+    /// same rule.
+    func legible(in scheme: ColorScheme) -> Color {
+        guard let luminance = relativeLuminance else { return self }
+        switch scheme {
+        case .dark where luminance < 0.05: return mixed(toward: 0.30)
+        case .dark where luminance < 0.12: return mixed(toward: 0.18)
+        case .light where luminance > 0.85: return mixed(toward: -0.22)
+        default: return self
+        }
+    }
+}

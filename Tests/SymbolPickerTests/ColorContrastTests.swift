@@ -22,4 +22,17 @@ final class ColorContrastTests: XCTestCase {
         XCTAssertEqual(Color(hex: "#123456")!.mixed(toward: 0).toHex(), "#123456", "nothing asked, nothing moved")
         XCTAssertEqual(Color(hex: "#123456")!.mixed(toward: 5).toHex(), "#FFFFFF", "clamped to all the way")
     }
+
+    func testALegibleColorIsLiftedOnDarkDroppedOnLightAndOtherwiseLeftAlone() throws {
+        let black = Color(hex: "#000000")!
+        XCTAssertEqual(black.legible(in: .dark).toHex(), black.mixed(toward: 0.30).toHex(), "a hole on a dark window becomes a shape")
+        XCTAssertGreaterThan(try XCTUnwrap(black.legible(in: .dark).relativeLuminance), 0.05)
+        XCTAssertEqual(black.legible(in: .light).toHex(), "#000000", "and stays black on white, where black is a color")
+        let white = Color(hex: "#FFFFFF")!
+        XCTAssertEqual(white.legible(in: .light).toHex(), "#C7C7C7")
+        XCTAssertEqual(white.legible(in: .dark).toHex(), "#FFFFFF")
+        let brand = Color(hex: "#635BFF")!
+        XCTAssertEqual(brand.legible(in: .dark).toHex(), "#635BFF", "Stripe's purple is left exactly as chosen")
+        XCTAssertEqual(brand.legible(in: .light).toHex(), "#635BFF")
+    }
 }
