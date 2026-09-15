@@ -19,7 +19,7 @@ import SwiftUI
 /// @State private var tint = Color.blue
 ///
 /// SymbolPicker(symbol: $icon, color: $tint)
-///     .frame(width: 360, height: 440)
+///     .frame(width: SymbolPicker.shortcutsSize.width, height: SymbolPicker.shortcutsSize.height)
 /// ```
 ///
 /// Hide the color row with the symbol-only initializer:
@@ -38,7 +38,13 @@ public struct SymbolPicker: View {
     @State private var results: [String] = []
     @FocusState private var searchFocused: Bool
 
-    private let gridSpacing: Double = 10
+    /// The size of the Shortcuts picker's popover, for a frame that matches it exactly.
+    public static let shortcutsSize = CGSize(width: 310, height: 428)
+
+    /// Shortcuts' grid, measured at 2×: eight cells across with no gap between them, rows 8 points
+    /// apart, the block inset 8 points at the sides and 10 above and below each category.
+    private let rowSpacing: Double = 8
+    private let gridInsets = EdgeInsets(top: 10, leading: 8, bottom: 10, trailing: 8)
     private let columnCount = 8
 
     /// Creates a picker with a color row above the symbol grid.
@@ -70,14 +76,15 @@ public struct SymbolPicker: View {
         VStack(spacing: 0) {
             if let colorSelection {
                 ColorPaletteRow(selection: colorSelection, palette: palette)
-                    .padding(.horizontal, 14)
-                    .padding(.top, 14)
-                    .padding(.bottom, 12)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 13)
+                    .padding(.bottom, 16)
                 Divider()
             }
             searchField
-                .padding(.horizontal, 12)
-                .padding(.vertical, 10)
+                .padding(.horizontal, 14)
+                .padding(.top, 8)
+                .padding(.bottom, 5)
 
             content
         }
@@ -127,23 +134,31 @@ public struct SymbolPicker: View {
                 ForEach(catalog.categories) { category in
                     sectionHeader(category.label)
                     grid(category.symbols)
-                        .padding(.horizontal, 12)
-                        .padding(.top, 8)
-                        .padding(.bottom, 16)
+                        .padding(gridInsets)
                 }
             }
         }
     }
 
-    /// The full-width uppercase header bar, matching Shortcuts' category dividers
+    /// The full-width uppercase header bar, matching Shortcuts' category dividers: 21 points tall,
+    /// the label 20 points in, on the window's own background so it sits a shade below the
+    /// popover in both appearances rather than a shade above it.
     private func sectionHeader(_ label: String) -> some View {
         Text(label.uppercased())
-            .font(.system(size: 11, weight: .semibold))
+            .font(.system(size: 13, weight: .semibold))
             .foregroundStyle(.secondary)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 5)
-            .background(Color.secondary.opacity(0.12))
+            .lineLimit(1)
+            .frame(maxWidth: .infinity, minHeight: 21, alignment: .leading)
+            .padding(.horizontal, 20)
+            .background(headerBackground)
+    }
+
+    private var headerBackground: Color {
+        #if canImport(AppKit)
+        Color(nsColor: .windowBackgroundColor)
+        #else
+        Color.primary.opacity(0.06)
+        #endif
     }
 
     private var searchResults: some View {
@@ -152,7 +167,7 @@ public struct SymbolPicker: View {
                 emptyState
             } else {
                 ScrollView {
-                    grid(results).padding(12)
+                    grid(results).padding(gridInsets)
                 }
             }
         }
@@ -172,7 +187,7 @@ public struct SymbolPicker: View {
 
     // MARK: - Grid
     private func grid(_ symbols: [String]) -> some View {
-        LazyVGrid(columns: columns, spacing: gridSpacing) {
+        LazyVGrid(columns: columns, spacing: rowSpacing) {
             ForEach(symbols, id: \.self) { name in
                 item(name)
             }
@@ -189,10 +204,10 @@ public struct SymbolPicker: View {
                     .aspectRatio(1, contentMode: .fit)
                     .foregroundStyle(isSelected ? Color.accentColor : .clear)
                     .opacity(0.2)
+                /// At a point size, not stretched to a box: a bicycle is wider than a watch in
+                /// Shortcuts too, and 16 medium is what its glyphs measure
                 Image(systemName: name)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 20, height: 20)
+                    .font(.system(size: 16, weight: .medium))
                     .foregroundStyle(isSelected ? Color.accentColor : .primary)
             }
             .contentShape(Rectangle())
@@ -202,7 +217,7 @@ public struct SymbolPicker: View {
     }
 
     private var columns: [GridItem] {
-        Array(repeating: GridItem(spacing: gridSpacing), count: columnCount)
+        Array(repeating: GridItem(.flexible(), spacing: 0), count: columnCount)
     }
 }
 
@@ -211,5 +226,5 @@ public struct SymbolPicker: View {
     @Previewable @State var symbol = "star.fill"
     @Previewable @State var color = Color.blue
     SymbolPicker(symbol: $symbol, color: $color)
-        .frame(width: 360, height: 460)
+        .frame(width: SymbolPicker.shortcutsSize.width, height: SymbolPicker.shortcutsSize.height)
 }
