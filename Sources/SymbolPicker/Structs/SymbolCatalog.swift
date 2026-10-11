@@ -6,6 +6,7 @@
 //  Created on 13/07/2026.
 //
 
+import Combine
 import SwiftUI
 
 /// Supplies SF Symbol data to ``SymbolPicker``, from two sources on purpose:
